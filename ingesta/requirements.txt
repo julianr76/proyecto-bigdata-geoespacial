@@ -1,0 +1,7 @@
+dask[complete]==2024.8.0
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==17.0.0
+pymongo==4.8.0
+kaggle==1.6.17
+pytest==8.3.2

@@ -1,0 +1,127 @@
+name: bigdata-geo
+
+services:
+  mongo:
+    image: mongo:7.0
+    command: ["--wiredTigerCacheSizeGB", "0.5"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_datos:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  spark-master:
+    build: ./spark
+    image: bigdata-geo/spark:latest
+    hostname: spark-master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+    ports:
+      - "8081:8080"
+    volumes:
+      - datos:/datos:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  spark-worker:
+    build: ./spark
+    image: bigdata-geo/spark:latest
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+      SPARK_WORKER_CORES: "1"
+      SPARK_WORKER_MEMORY: 1g
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+    volumes:
+      - datos:/datos:ro
+    depends_on:
+      - spark-master
+
+  dask-scheduler:
+    build: ./ingesta
+    image: bigdata-geo/dask:latest
+    command: ["dask", "scheduler"]
+    ports:
+      - "8787:8787"
+
+  dask-worker:
+    build: ./ingesta
+    image: bigdata-geo/dask:latest
+    command: ["dask", "worker", "tcp://dask-scheduler:8786", "--nthreads", "2", "--memory-limit", "1GB"]
+    deploy:
+      replicas: 2
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+    volumes:
+      - datos:/datos
+    depends_on:
+      - dask-scheduler
+
+  ingesta:
+    build: ./ingesta
+    image: bigdata-geo/dask:latest
+    profiles: ["tareas"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+      DASK_SCHEDULER: tcp://dask-scheduler:8786
+      MAX_REGISTROS: ${MAX_REGISTROS:-1000000}
+      KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
+      KAGGLE_KEY: ${KAGGLE_KEY:-}
+    volumes:
+      - datos:/datos
+    depends_on:
+      mongo:
+        condition: service_healthy
+      dask-scheduler:
+        condition: service_started
+
+  api:
+    build: ./api
+    image: bigdata-geo/api:latest
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  api-pruebas:
+    build: ./api
+    image: bigdata-geo/api:latest
+    profiles: ["pruebas"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: accidentes_db
+    ports:
+      - "5001:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  jenkins:
+    build: ./jenkins
+    image: bigdata-geo/jenkins:latest
+    user: root
+    environment:
+      JAVA_OPTS: -Xmx512m
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  mongo_datos:
+  datos:
+  jenkins_home:
