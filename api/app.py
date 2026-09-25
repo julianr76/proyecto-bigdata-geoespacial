@@ -60,7 +60,7 @@ def salud():
         return jsonify({"estado": "sin conexion a mongo", "detalle": str(error)}), 503
 
 
-@app.get("/accidentes/cercano")
+@app.get("/accidentes/cercanos")
 def cercanos():
     lat = consultas.leer_numero(request.args.get("lat"), "lat")
     lng = consultas.leer_numero(request.args.get("lng"), "lng")
