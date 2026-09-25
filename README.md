@@ -26,7 +26,7 @@ Dataset: https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents (unos 7.7 mi
 1. Clonar el repositorio:
 
 ```
-git clone https://github.com/USUARIO/proyecto-bigdata-geoespacial.git
+git clone https://github.com/julianr76/proyecto-bigdata-geoespacial.git
 cd proyecto-bigdata-geoespacial
 ```
 
