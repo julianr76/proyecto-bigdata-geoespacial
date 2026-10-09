@@ -101,5 +101,11 @@ def resultados_spark(tipo):
     return respuesta(documentos)
 
 
+@app.get("/accidentes/estado/<codigo>")
+def por_estado(codigo):
+    limite = consultas.leer_limite(request.args.get("limite"))
+    documentos = obtener_db()["accidentes"].find({"estado": codigo.upper()}, {"_id": 0}).limit(limite)
+    return respuesta(documentos)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
