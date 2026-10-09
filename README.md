@@ -64,7 +64,7 @@ La descarga se hace una sola vez (el csv queda en el volumen `datos`). La carga 
    - Password: la key de Kaggle
    - ID: `kaggle-credenciales`
 5. Crear un item nuevo tipo **Pipeline**, en *Triggers* marcar **GitHub hook trigger for GITScm polling** y en *Pipeline* elegir **Pipeline script from SCM**, Git, la URL del repositorio, rama `*/main` y Script Path `Jenkinsfile`.
-6. En GitHub, en *Settings > Webhooks* agregar `http://DIRECCION_PUBLICA_DE_JENKINS/github-webhook/` con content type `application/json`. Si Jenkins corre en un PC local se necesita una URL pública, por ejemplo con ngrok (`ngrok http 8080`).
+6. En GitHub, en *Settings > Webhooks* agregar `https://able-gurgling-strike.ngrok-free.dev/github-webhook/` con content type `application/json`. Si Jenkins corre en un PC local se necesita una URL pública, por ejemplo con ngrok (`ngrok http 8080`).
 
 Etapas del pipeline: Checkout, Construir imagenes, Pruebas unitarias (pytest), Levantar servicios, Descarga e ingesta, Procesamiento Spark, Pruebas contra la API y Despliegue. Si cualquier etapa falla el despliegue no se hace. Las pruebas contra la API se hacen sobre una copia de la API nueva (`api-pruebas`, puerto 5001) y solo si pasan se reemplaza la API del puerto 5000.
 
